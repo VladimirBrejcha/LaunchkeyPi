@@ -45,6 +45,23 @@ live_loop :pad_events do
   end
 end
 
+live_loop :cc_events do
+  use_real_time
+  c, velocity = sync "/midi:launchkey_mini_mk3_daw_port:16/control_change"
+  case c
+  when 21
+    amp = velocity / 127.0
+    set :mixer_amp, amp
+    set_mixer_control! amp: amp
+  when 27
+    set :mixer_hpf, velocity
+    set_mixer_control! hpf: velocity, hpf_slide: 0
+  when 28
+    set :mixer_lpf, velocity
+    set_mixer_control! lpf: velocity, lpf_slide: 0
+  end
+end
+
 ## Actions
 
 # Switches between daw and basic mode
@@ -83,6 +100,12 @@ define :update_all_lights do
   end
 end
 
+define :update_mixer do
+  set_mixer_control! amp: get(:mixer_amp) || 1
+  set_mixer_control! hpf: get(:mixer_hpf) || 127, hpf_slide: 0
+  set_mixer_control! lpf: get(:mixer_lpf) || 0, hpf_slide: 0
+end
+
 ## ============= ##
 
 ## Init
@@ -100,4 +123,5 @@ if not configured
   
   daw_mode true
   update_all_lights
+  update_mixer
 end
