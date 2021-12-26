@@ -13,6 +13,8 @@ end
 module PadState
   DISABLED = Color::DISABLED
   ENABLED = Color::PINK
+  ENABLED_2 = Color::BLUE
+  ENABLED_3 = Color::GREEN
 end
 
 configured = get[:configured]
@@ -63,8 +65,13 @@ define :light_pad do |pad, color|
 end
 
 define :switch_pad_light do |pad|
-  if get[:pads_state][pad] == PadState::DISABLED
+  s = get[:pads_state][pad]
+  if s == PadState::DISABLED
     light_pad pad, PadState::ENABLED
+  elsif s == PadState::ENABLED
+    light_pad pad, PadState::ENABLED_2
+  elsif s == PadState::ENABLED_2
+    light_pad pad, PadState::ENABLED_3
   else
     light_pad pad, PadState::DISABLED
   end
@@ -89,31 +96,8 @@ if not configured
     hash[value] = PadState::DISABLED
     hash
   end
-  
   set :pads_state, state
   
   daw_mode true
   update_all_lights
-end
-
-## Play
-
-live_loop :bass do
-  tick
-  use_synth_defaults sustain: 3, release: 2,
-    amp: 0.5
-  use_merged_synth_defaults note: :f3 + (ring 0).look if get[:pads_state][pads[8]] == PadState::ENABLED
-  use_merged_synth_defaults note: :f3 + (ring 0,0,3,-2).stretch(2).look if get[:pads_state][pads[8]] == PadState::DISABLED
-  synth :hollow if get[:pads_state][pads[0]] == PadState::ENABLED
-  synth :growl if get[:pads_state][pads[1]] == PadState::ENABLED
-  sleep 4
-end
-
-slow_kick = "/Users/vladimirbrejcha/Library/Mobile Documents/com~apple~CloudDocs/Projects/SonicPi/Samples/Myloops Free Techno Sample Pack/KIT_05_126BPM_G#MAJ/KIT_05_Kick_With_Bass_126BPM_G#MAJ.wav", 7
-
-with_fx :reverb, room: 0.5 do
-  live_loop :slow_kick do
-    sample slow_kick, amp: 0.5, finish: 0.2, rate: 0.744, pitch: 0.3, cutoff: 120 if get[:pads_state][pads[7]] == PadState::ENABLED
-    sleep 4
-  end
 end
